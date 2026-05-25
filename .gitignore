@@ -1,0 +1,15 @@
+# Python
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.venv/
+venv/
+build/
+
+# Output files
+output/
+logs/
+
+.DS_Store
+*.egg-info/
+.pytest_cache/

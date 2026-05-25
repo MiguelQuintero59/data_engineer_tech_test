@@ -1,0 +1,30 @@
+[project]
+name = "transactions"
+version = "0.1.0"
+description = "Apache Beam batch ETL job for Virgin Mobile Tech Interview"
+requires-python = ">=3.11"
+authors = [
+    {name = "Miguel Quintero", email = "miguelquintero95@gmail.com"}
+]
+dependencies = [
+    "apache-beam[gcp]",
+]
+
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project.optional-dependencies]
+dev = [
+    "pytest"
+]
+
+[project.scripts]
+transactions-etl = "transactions.main:run"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["src/test"]
+pythonpath = ["src"]
