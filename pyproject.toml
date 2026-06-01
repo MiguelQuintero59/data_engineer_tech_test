@@ -7,7 +7,8 @@ authors = [
     {name = "Miguel Quintero", email = "miguelquintero95@gmail.com"}
 ]
 dependencies = [
-    "apache-beam[gcp]",
+    "apache-beam",
+    "google-cloud-storage",
 ]
 
 [build-system]
