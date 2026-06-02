@@ -25,8 +25,7 @@ class TestBeam(unittest.TestCase):
                 | "Parse transaction rows" >> beam.Map(parse_rows)
             )
             aggregations = Aggregations()
-            transformation = extract | CompositeTransform(filters = aggregations,
-                                                          transformations = aggregations)
+            transformation = extract | CompositeTransform(aggregations = aggregations)
             assert_that(transformation, equal_to(expected), label="CheckOutput")
 
 

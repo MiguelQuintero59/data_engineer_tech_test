@@ -1,4 +1,5 @@
 import apache_beam as beam
+from transactions.transform.transformation import TransactionsFilters, TransactionsTransformations
 
 class CompositeTransform(beam.PTransform):
     def __init__(self, aggregations):
