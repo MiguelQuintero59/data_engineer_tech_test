@@ -1,11 +1,15 @@
 import unittest
 import apache_beam as beam
 from transactions.transform.parser import parse_rows
-from transactions.transform.transformation import Aggregations 
+from transactions.transform.transformation import Aggregations
 from transactions.transform.composite import CompositeTransform
 
+from transactions.config_logger import setup_logger
+from transactions.transform.parser import ParserDLQ
 from apache_beam.testing.test_pipeline import TestPipeline as BeamTestPipeline
 from apache_beam.testing.util import assert_that, equal_to
+
+logger = setup_logger()
 
 
 class TestBeam(unittest.TestCase):
@@ -18,14 +22,19 @@ class TestBeam(unittest.TestCase):
             "2017-01-01 04:22:23 UTC,wallet00000e719adfeaa64b5a,wallet00001e494c12b3083634,19.95",
             "2009-01-09 02:54:25 UTC,wallet00000e719adfeaa64b5a,wallet00001866cb7e0f09a890,1021101.99",
         ]
+
         with BeamTestPipeline() as p:
-            extract = (
-                p
-                | "Testing data" >> beam.Create(input_data)
-                | "Parse transaction rows" >> beam.Map(parse_rows)
-            )
+            logger.info("Extraction phase")
+            extract = p | "Testing data" >> beam.Create(input_data)
+            parsed = extract | "Parse transaction rows" >> beam.ParDo(
+                ParserDLQ()
+            ).with_outputs("dlq", main="valid")
+
+            result_outputs = parsed.valid
+            result_failures = parsed.dlq
+
             aggregations = Aggregations()
-            transformation = extract | CompositeTransform(aggregations = aggregations)
+            transformation = extract | CompositeTransform(aggregations=aggregations)
             assert_that(transformation, equal_to(expected), label="CheckOutput")
 
 

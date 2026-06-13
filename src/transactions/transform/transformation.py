@@ -37,8 +37,9 @@ class Aggregations(TransactionsFilters, TransactionsTransformations):
             transaction_row["timestamp"].date().isoformat(),
             transaction_row["transaction_amount"],
         )
-    
+
     def format_into_json(self, transaction_row):
         transaction_date, transaction_amount = transaction_row
-        return json.dumps({"date": transaction_date,
-                        "total_amount": transaction_amount})
+        return json.dumps(
+            {"date": transaction_date, "total_amount": transaction_amount}
+        )
