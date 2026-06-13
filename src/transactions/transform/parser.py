@@ -15,7 +15,7 @@ logger = logging.getLogger(__name__)
 class ParserDLQ(beam.DoFn):
     def process(self, row: str):
         try:
-            row_lst = next(csv.reader(io.StringIO(self.row)))
+            row_lst = next(csv.reader(io.StringIO(row)))
         except Exception as error:
             yield pvalue.TaggedOutput(
                 "dlq",
