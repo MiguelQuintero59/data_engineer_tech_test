@@ -1,2 +1,7 @@
-input_file = "gs://cloud-samples-data/bigquery/sample-transactions/transactions.csv"
-output_file = "output/results.jsonl.gz"
+import os
+from dotenv import load_dotenv
+
+load_dotenv()
+
+input_file= os.environ['input_file']
+output_file = os.environ['output_file']
