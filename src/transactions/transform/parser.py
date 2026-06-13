@@ -34,7 +34,7 @@ class ParserDLQ(beam.DoFn):
                 {
                     "original_message": row,
                     "failure_type": "CSV parsing error",
-                    "error_message": str(error),
+                    "error_message": f"Expected 4 columns, got {len(row_lst)}",
                     "failed_at": datetime.now(timezone.utc).isoformat(),
                 },
             )

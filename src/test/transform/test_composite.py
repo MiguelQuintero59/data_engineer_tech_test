@@ -1,12 +1,15 @@
+import json
 import unittest
 import apache_beam as beam
-from transactions.transform.transformation import Aggregations
-from transactions.transform.composite import CompositeTransform
+
+from apache_beam.testing.util import assert_that, equal_to
+from apache_beam.io.filesystem import CompressionTypes
+from apache_beam.testing.test_pipeline import TestPipeline as BeamTestPipeline
 
 from transactions.config_logger import setup_logger
 from transactions.transform.parser import ParserDLQ
-from apache_beam.testing.test_pipeline import TestPipeline as BeamTestPipeline
-from apache_beam.testing.util import assert_that, equal_to
+from transactions.transform.composite import CompositeTransform
+from transactions.transform.transformation import Aggregations
 
 logger = setup_logger()
 
@@ -20,6 +23,7 @@ class TestBeam(unittest.TestCase):
             "2017-08-31 17:00:09 UTC,wallet00001e494c12b3083634,wallet00005f83196ec58e4ffe,13700000023.08",
             "2017-01-01 04:22:23 UTC,wallet00000e719adfeaa64b5a,wallet00001e494c12b3083634,19.95",
             "2009-01-09 02:54:25 UTC,wallet00000e719adfeaa64b5a,wallet00001866cb7e0f09a890,1021101.99",
+            "2009-01-09 02:54:25 UTC,2009-01-09 02:54:25 UTC,wallet00000e719adfeaa64b5a,wallet00001866cb7e0f09a890,1021101.99",
         ]
 
         with BeamTestPipeline() as p:
@@ -34,6 +38,16 @@ class TestBeam(unittest.TestCase):
 
             aggregations = Aggregations()
             transformation = result_outputs | CompositeTransform(aggregations=aggregations)
+            dlq_load = (
+                result_failures
+                | "Format DLQ records into JSON" >> beam.Map(json.dumps)
+                | "Save DLQ output file"
+                >> beam.io.WriteToText(
+                    "output/dead_letter.jsonl.gz",
+                    shard_name_template="",
+                    compression_type=CompressionTypes.GZIP,
+                )
+            )
             assert_that(transformation, equal_to(expected), label="CheckOutput")
 
 
