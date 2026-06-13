@@ -33,7 +33,7 @@ class TestBeam(unittest.TestCase):
             result_failures = parsed.dlq
 
             aggregations = Aggregations()
-            transformation = extract | CompositeTransform(aggregations=aggregations)
+            transformation = result_outputs | CompositeTransform(aggregations=aggregations)
             assert_that(transformation, equal_to(expected), label="CheckOutput")
 
 
