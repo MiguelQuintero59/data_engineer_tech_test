@@ -1,6 +1,5 @@
 import unittest
 import apache_beam as beam
-from transactions.transform.parser import parse_rows
 from transactions.transform.transformation import Aggregations
 from transactions.transform.composite import CompositeTransform
 
