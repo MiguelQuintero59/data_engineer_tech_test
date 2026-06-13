@@ -1,26 +1,63 @@
+import csv
+import io
 import logging
-from datetime import datetime
+import apache_beam as beam
+
+from typing import Tuple
+from apache_beam import pvalue
+from collections import defaultdict
+from apache_beam import PCollection
+from datetime import datetime, timezone
 
 logger = logging.getLogger(__name__)
 
-def parse_rows(row):
-    row_lst = row.split(",")
 
-    if len(row_lst) != 4:
-        logger.error(f"Invalid row format expected 4 values but got {len(row_lst)}")
-        raise ValueError (f"Expected 4 values but got {len(row_lst)}")
+class ParserDLQ(beam.DoFn):
+    def process(self, row: str):
+        try:
+            row_lst = next(csv.reader(io.StringIO(self.row)))
+        except Exception as error:
+            yield pvalue.TaggedOutput(
+                "dlq",
+                {
+                    "original_message": row,
+                    "failure_type": "CSV parsing error",
+                    "error_message": str(error),
+                    "failed_at": datetime.now(timezone.utc).isoformat(),
+                },
+            )
+            return
 
-    try:
-        transaction_dict = {
-            'timestamp': datetime.strptime(row_lst[0].strip(), '%Y-%m-%d %H:%M:%S %Z'),
-            'origin': row_lst[1].strip(),
-            'destination': row_lst[2].strip(),
-            'transaction_amount': float(row_lst[3].strip())
-        }
-    except ValueError as error:
-        logger.error("Failed to parse row: %s", row)
-        logger.error("Parsing error: %s", error)
-        raise
+        if len(row_lst) != 4:
+            yield pvalue.TaggedOutput(
+                "dlq",
+                {
+                    "original_message": row,
+                    "failure_type": "CSV parsing error",
+                    "error_message": str(error),
+                    "failed_at": datetime.now(timezone.utc).isoformat(),
+                },
+            )
+            return
 
-    logger.debug("Parsing CSV file: %s",transaction_dict) 
-    return transaction_dict
+        try:
+            transaction_dict = {
+                "timestamp": datetime.strptime(
+                    row_lst[0].strip(), "%Y-%m-%d %H:%M:%S %Z"
+                ),
+                "origin": row_lst[1].strip(),
+                "destination": row_lst[2].strip(),
+                "transaction_amount": float(row_lst[3].strip()),
+            }
+            yield transaction_dict
+        except ValueError as error:
+            yield pvalue.TaggedOutput(
+                "dlq",
+                {
+                    "original_message": row,
+                    "failure_type": "CSV parsing error",
+                    "error_message": str(error),
+                    "failed_at": datetime.now(timezone.utc).isoformat(),
+                },
+            )
+            return
